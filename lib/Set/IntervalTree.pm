@@ -27,7 +27,7 @@ our @EXPORT = qw(
 	
 );
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -36,7 +36,7 @@ sub AUTOLOAD {
     my $constname;
     our $AUTOLOAD;
     ($constname = $AUTOLOAD) =~ s/.*:://;
-    croak "&Set::IntervalTree::constant not defined" if $constname eq 'constant';
+    croak "&Set::IntervalTree::constant not defined!" if $constname eq 'constant';
     my ($error, $val) = constant($constname);
     if ($error) { croak $error; }
     {
@@ -77,7 +77,15 @@ Set::IntervalTree - Perform range-based lookups on sets of ranges.
   $tree->insert($some_obj,1000,1100);
 
   my $results = $tree->fetch(400,800);
+  my $window = $tree->window(100,200);
   print scalar(@$results)." intervals found.\n";
+
+  # remove only items overlapping location 100..200 with values 
+  # less than 100;
+  my $removed = $tree->remove(100,200 sub {
+    my ($item, $low, $high) = @_;
+    return $item < 100;
+  });
 
 =head1 DESCRIPTION
 
@@ -103,7 +111,7 @@ $tree->insert($object, $low, $high);
   $low is the lower bound of the range.
   $high is the upper bound of the range.
 
-  Ranges are represented as both-ends closed intervals.
+  Ranges are represented as half-closed integer intervals.
 
 my $results = $tree->fetch($low, $high)
 
@@ -113,10 +121,36 @@ my $results = $tree->fetch($low, $high)
   $low is the lower bound of the region to query.
   $high is the upper bound of the region to query.
 
-=head1 Limitations
+my $results = $tree->fetch_window($low, $high)
 
-I still haven't implemented a $tree->remove() method to remove ranges 
-from a tree.
+  Return an arrayref of perl objects whose ranges are completely contained
+  witin the specified range.
+
+  $low is the lower bound of the region to query.
+  $high is the upper bound of the region to query.
+
+my $removed = $tree->remove($low, $high [, optional \&coderef]);
+
+  Remove items in the tree that overlap the region from $low to $high. 
+  A coderef can be passed in as an optional third argument for filtering
+  what is removed. The coderef receives the stored item, the low point,
+  and the high point as its arguments. If the result value of the coderef
+  is true, the item is removed, otherwise the item remains in the tree.
+
+  Returns the list of removed items.
+
+my $removed = $tree->remove_window($low, $high [, optional \&coderef]);
+
+  Remove items in the tree that are contained within the region from $low
+  to $high.  A coderef can be passed in as an optional third argument
+  for filtering what is removed. The coderef receives the stored item,
+  the low point, and the high point as its arguments. If the result
+  value of the coderef is true, the item is removed, otherwise the item
+  remains in the tree.
+
+  Returns the list of removed items.
+
+=head1 Limitations
 
 A $tree->print() serialization method might be useful for debugging.
 
