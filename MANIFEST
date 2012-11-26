@@ -9,7 +9,6 @@ src/interval_tree.h
 src/test_main.cc
 src/Makefile
 t/Set-IntervalTree.t
-t/check32bitwraparound.t
 lib/Set/IntervalTree.pm
 META.yml                                 Module YAML meta-data (added by MakeMaker)
 META.json                                Module JSON meta-data (added by MakeMaker)
